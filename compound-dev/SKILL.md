@@ -1,6 +1,17 @@
 ---
 name: compound-dev
-description: Make Claude Code sessions compound — every session builds on the last instead of starting from scratch. Implements Karpathy's LLM Wiki pattern for software engineering. Use this skill when starting a new project, onboarding to an existing codebase, or any time the user says "set up my project", "add project memory", "create CLAUDE.md", "help me structure this project", "I keep re-explaining things to Claude", "my sessions don't remember anything", "ingest this document", or "run a health check". Also trigger when the user asks about session efficiency, token usage, or wants to improve their Claude Code workflow. This skill creates and maintains a three-layer knowledge system: raw sources, an interlinked wiki, and a schema that governs it all — plus metrics to prove it's working.
+description: >-
+  Make Claude Code sessions compound — every session builds on the last
+  instead of starting from scratch. Implements Karpathy's LLM Wiki pattern
+  for software engineering. Use this skill when starting a new project,
+  onboarding to an existing codebase, or any time the user says "set up my
+  project", "add project memory", "create CLAUDE.md", "help me structure
+  this project", "I keep re-explaining things to Claude", "my sessions
+  don't remember anything", "ingest this document", or "run a health check".
+  Also trigger when the user asks about session efficiency, token usage, or
+  wants to improve their Claude Code workflow. This skill creates and
+  maintains a three-layer knowledge system — raw sources, an interlinked
+  wiki, and a schema that governs it all — plus metrics to prove it works.
 ---
 
 # compound-dev
