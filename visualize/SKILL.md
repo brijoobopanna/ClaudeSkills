@@ -1,6 +1,6 @@
 ---
 name: visual-brief
-description: Create publication-quality technical infographics from any source — tweets, articles, architectures, or ideas. Use this skill whenever the user wants to visually break down a technical concept, map a system architecture, turn a tweet or thread into a shareable diagram, create editorial-style pipeline or flow visualizations, illustrate feedback loops or compounding mechanisms, or produce visuals for a newsletter or blog. Trigger on phrases like "visualize this", "diagram this", "break this down visually", "map this architecture", "make an infographic", "turn this tweet into a visual", "show me how this system works", "create a visual for my newsletter", or any request to produce a designed technical visual rather than a generic flowchart. Also trigger when the user shares a URL, screenshot, or paste of technical content and asks for analysis — the visual IS the analysis.
+description: Create publication-quality technical infographics from any source — tweets, articles, architectures, or ideas. Use this skill whenever the user wants to visually break down a technical concept, map a system architecture, turn a tweet or thread into a shareable diagram, create editorial-style pipeline or flow visualizations, illustrate feedback loops or compounding mechanisms, or produce visuals for a newsletter or blog. Trigger on phrases like "visualize this", "diagram this", "break this down visually", "map this architecture", "make an infographic", "turn this tweet into a visual", "show me how this system works", "create a visual for my newsletter", or any request to produce a designed technical visual rather than a generic flowchart. Also trigger when the user shares a URL, screenshot, or paste of technical content and asks for analysis — the visual IS the analysis. Also trigger for gap analysis: when a user shares a codebase or project and asks "what's missing", "how does this compare to X", or "show me the gaps" — produce a status-colored visual showing what exists (teal), what's missing (coral), and what to build first (purple).
 ---
 
 # visual-brief
@@ -14,14 +14,27 @@ look like they belong on Stripe's blog or in a conference keynote.
 
 ## What this skill produces
 
-Single-file HTML infographics with:
+Single-file visuals in multiple formats:
+
+- **HTML** (default): Self-contained, shareable, responsive. Best for sharing
+  on social media, embedding in blogs, or viewing in a browser.
+- **Markdown**: For filing into wikis, Obsidian vaults, or GitHub READMEs.
+  Uses ASCII/Unicode box-drawing and tables. Best for compound-dev wiki/.
+- **SVG**: For embedding in documents, slides, or other visuals.
+  Best for composing into larger designs.
+- **Marp**: Slide deck format compatible with Karpathy's preferred workflow.
+  Best for presentations.
+
+When the user specifies a format ("output as markdown", "make this a Marp slide",
+"give me SVG"), use that format. Otherwise default to HTML.
+
+All formats include:
 - Monospace section headers, clean sans-serif body text
-- Color-coded functional zones
+- Color-coded functional zones (except markdown, which uses labels)
 - Trust boundaries and quality gates when applicable
 - Explicit feedback/compound loops
 - Core insight callout
-- Responsive design (desktop + mobile)
-- Zero external dependencies beyond Google Fonts
+- Zero external dependencies beyond Google Fonts (HTML only)
 
 ---
 
@@ -46,6 +59,9 @@ Single-file HTML infographics with:
 | User describes a multi-step system | Seeing it beats reading about it |
 | User is comparing before/after | Side-by-side visual makes the delta obvious |
 | User asks "how does X work" for a system | Pipeline or layered flow answers faster than prose |
+| User shares a GitHub repo / codebase | Gap analysis shows what exists vs what's missing |
+| User asks "how does my project compare to X" | Mapping overlay shows alignment and gaps |
+| User gets a gap analysis in text form | Visualizing gaps is more actionable than reading them |
 
 ### When NOT to use this skill
 
@@ -83,6 +99,8 @@ Ask: **what's the primary story?**
 | Something compounds over time | **Any + compound loop strip** | read → work → enrich → better reads |
 | One thing connects to many | **Hub-and-spoke** | Wiki at center, tools around it |
 | Showing a transformation | **Before/after split** | Manual process → automated pipeline |
+| What exists vs what's missing | **Gap analysis** | Current pipeline (teal) + missing layers (coral) + priorities (purple) |
+| My system vs a reference framework | **Mapping overlay** | AIweekly pipeline mapped to Karpathy's 5 steps |
 
 ### Step 3: Choose color strategy
 
@@ -91,6 +109,7 @@ Ask: **what's the primary story?**
 | Simple (5-7 boxes) | **Single accent** | One strong color for hero, rest neutral |
 | Complex (8+ boxes) | **Multi-accent** | One color per functional zone |
 | Has review gates | **Trust-boundary** | Gray raw → Red gate → Green approved |
+| Showing gaps/status | **Status-based** | Teal=built, Coral=missing, Purple=priority |
 
 ### Step 4: Identify hero and gate
 
@@ -249,6 +268,98 @@ Input: AIweekly codebase analysis
 Output: Current pipeline (teal) + gap analysis (coral) + priority (purple)
 Layout: Horizontal pipeline + gap grid
 Color: Multi-accent (semantic: teal=have, coral=missing, purple=priority)
+
+---
+
+## Advanced patterns (from real-world usage)
+
+### Gap analysis (what exists vs what's missing)
+
+Used when someone shares their existing system and wants to know what's
+missing relative to a reference framework (e.g., "how does my project
+compare to Karpathy's approach?").
+
+**Layout:** Two-part visual stacked vertically:
+1. Top section: the existing system (use teal/green — "you have this")
+2. Middle section: the gaps (use coral/red — "you're missing this")
+3. Optional bottom: priority order (use purple — "build this first")
+
+**Color strategy: status-based**
+```
+Teal    = already built, working
+Coral   = missing, the gap
+Purple  = priority / what to build next
+Gray    = support infrastructure (exists but secondary)
+```
+
+**The key visual move:** The existing pipeline looks complete and confident
+(solid borders, teal fills, connected arrows). The gap section uses the
+SAME box style but in coral — so the viewer immediately sees "these should
+exist but don't." The contrast between "have" and "need" IS the insight.
+
+**Content for gap boxes:** Each gap box needs:
+- Title: what's missing (e.g., "No persistent wiki")
+- Detail line 1: what this means practically
+- Detail line 2: why it matters
+
+Don't just list gaps — explain the consequence. "No persistent wiki" is
+a label. "Each run is isolated. No topic/trend memory." is an insight.
+
+### Mapping one system to another
+
+Used when someone wants to see how their system maps to a reference
+architecture (e.g., "map my pipeline to Karpathy's steps").
+
+**Layout:** Two-row comparison:
+- Row 1: The reference system (labeled, e.g., "Karpathy's pipeline")
+- Row 2: The user's system, aligned below corresponding steps
+- Vertical dashed lines or arrows connecting equivalent steps
+
+**Or use a mapping table inside the visual:**
+```
+| Reference step     | Your equivalent        |
+| Sources → raw/     | sources.txt + expanders |
+| Wiki compilation   | filter + rewrite phase  |
+| Auto-maintained index | .state.json + cache  |
+```
+
+**The insight this reveals:** It makes the 1:1 matches obvious, AND makes
+the gaps visible by absence — steps in the reference row with nothing
+below them are what's missing.
+
+### Extracting structure from an existing codebase
+
+When the source isn't a tweet or article but a GitHub repo or codebase,
+the extraction process is different:
+
+```
+STEP 1: Read the project's CLAUDE.md or README (the intent)
+STEP 2: Read the main orchestration file (the flow)
+STEP 3: Read the directory structure (the architecture)
+STEP 4: Now extract entities, relations, stages as usual
+STEP 5: Additionally extract:
+  - EXISTING:   What's already built and working
+  - MISSING:    What the reference framework has that this doesn't
+  - STRENGTH:   What this project does BETTER than the reference
+```
+
+The extra step — identifying strengths — prevents the visual from being
+purely negative. The aiweekly analysis found that token budget tracking,
+article caching, and state deduplication were strengths that Karpathy's
+system doesn't explicitly have. Show these too.
+
+### The "processes and forgets" pattern
+
+A specific visual insight for systems that work but don't compound:
+
+Show the pipeline working correctly (data flows left to right, output
+is produced) but with a **missing bottom layer** — a dashed outline where
+the compounding/memory layer should be. Label it something like
+"knowledge evaporates here" or "no memory between runs."
+
+This is more powerful than just listing "no wiki" as a gap. It shows the
+pipeline IS complete for single runs, but has no mechanism for learning
+across runs. The viewer sees the shape of what's missing, not just a label.
 
 ---
 
