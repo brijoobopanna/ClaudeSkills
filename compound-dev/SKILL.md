@@ -22,14 +22,22 @@ re-discover patterns. Nothing accumulates.
 
 compound-dev is different. The LLM **incrementally builds and maintains a
 persistent wiki** — structured, interlinked markdown files that capture
-decisions, patterns, gotchas, entities, and concepts. When you start a
-session, the LLM reads the wiki and already knows. When you end a session,
+decisions, patterns, gotchas, entities, people, and concepts. When you start
+a session, the LLM reads the wiki and already knows. When you end a session,
 new knowledge integrates into the existing wiki — updating entity pages,
 noting contradictions, strengthening the synthesis.
 
 **The wiki is a persistent, compounding artifact.** The cross-references are
 already there. The contradictions have been flagged. The synthesis reflects
 everything you've built. The wiki gets richer with every session.
+
+This is not a wiki for the sake of having a wiki. It's a **context engineering
+system.** You're building the exact input your LLM needs to do useful work.
+Every meeting note, every linked decision, every filed artifact improves the
+quality of every session that follows. The difference between prompting cold
+("help me write a design doc") and prompting an LLM that has access to six
+months of decisions, three prior design docs, and your notes on the existing
+architecture — that difference is the entire value of compound-dev.
 
 ---
 
@@ -79,7 +87,8 @@ your-project/
     ├── overview.md          ← living synthesis of the entire project
     ├── decisions/           ← one file per major decision
     ├── concepts/            ← patterns, architectures, approaches
-    ├── entities/            ← tools, services, APIs, people
+    ├── entities/            ← tools, services, APIs, key components
+    ├── people/              ← one file per key person (teammate, stakeholder, mentor)
     └── gotchas/             ← traps and how to avoid them
 ```
 
@@ -99,6 +108,8 @@ your-project/
     ├── decisions/
     ├── concepts/
     ├── entities/
+    ├── people/
+    ├── daily/               ← dated session/meeting notes, auto-linked to people + entities
     └── gotchas/
 ```
 
@@ -122,15 +133,17 @@ in CLAUDE.md.
 
 ### Ingest
 
-When new reference material is added — an article, a library doc, a design
-spec, an API reference — tell Claude Code: **"Ingest this into the wiki."**
+There are three ways to add knowledge to the wiki:
+
+**Manual ingest** — add a specific source. Tell Claude Code:
+**"Ingest this into the wiki."**
 
 Claude Code will:
 1. Read the source material
 2. Discuss key takeaways with you
 3. Write a summary page in wiki/
 4. Update wiki/index.md
-5. Update relevant entity and concept pages across the wiki
+5. Update relevant entity, concept, and people pages across the wiki
 6. Add cross-references and backlinks
 7. Note any contradictions with existing wiki content
 8. Append to wiki/log.md
@@ -138,6 +151,30 @@ Claude Code will:
 A single source might touch 5-10 wiki pages. This is the compounding
 mechanism — new knowledge integrates with existing knowledge, not just
 piles up next to it.
+
+**Spider ingest** — start from one document and pull in everything related.
+Tell Claude Code: **"Spider from this doc and pull in all related context."**
+
+Claude Code will follow links, references, and mentions outward from the
+starting document — grabbing related files, linked resources, referenced
+docs — and ingest each one. This is how a single design spec can pull in
+the Slack thread where the approach was debated, the prior design doc it
+replaced, and the API docs it references. The output is better because the
+LLM is working with the real history, not your summary of it.
+
+**Meeting capture** (full level with daily/) — after a meeting or 1:1,
+tell Claude Code: **"Create a meeting note for today."**
+
+Claude Code will:
+1. Create a dated note in wiki/daily/YYYY-MM-DD/
+2. Link it to the relevant people in wiki/people/
+3. Link it to the relevant projects and entities
+4. Over time, each person's page becomes a timeline of every conversation,
+   decision, and open thread with them
+
+This is the pattern that makes compound-dev work for teams: after months,
+you can ask "what have I discussed with [person] about [project]?" and
+get a complete answer because every interaction was captured and linked.
 
 ### Session (automatic)
 
@@ -201,7 +238,8 @@ PROJECT HEALTH — [project name]
 Initialized: [date] | Sessions: [count] | Last session: [date]
 
 WIKI QUALITY
-  Pages:               [X] total ([X] entities, [X] concepts, [X] decisions)
+  Pages:               [X] total ([X] entities, [X] concepts, [X] decisions,
+                                   [X] people, [X] daily notes)
   Cross-references:    [X] links between pages
   Contradictions:      [X] flagged
   Orphan pages:        [X] (no inbound links)
@@ -273,6 +311,60 @@ during lint passes. Contains:
 - Links to the most important wiki pages
 
 This is the page a new team member reads first.
+
+### wiki/people/ pages
+
+One file per key person. Each page accumulates over time:
+
+```markdown
+---
+created: 2026-04-05
+updated: 2026-04-08
+role: tech lead
+tags: [team, backend, auth]
+---
+
+# Alice Chen
+
+Role: Backend tech lead. Primary contact for auth and API design.
+
+## Interactions
+- [2026-04-05 standup](../daily/2026-04-05.md) — discussed JWT vs sessions
+- [2026-04-08 1:1](../daily/2026-04-08.md) — agreed on rate limiting approach
+
+## Key context
+- Prefers composition over inheritance
+- Owns the auth module, consult before changes
+- Available Mon-Thu, off Fridays
+
+## Related
+- [auth decision](../decisions/auth-jwt.md)
+- [rate limiting concept](../concepts/rate-limiting.md)
+```
+
+After months, each person's page becomes a timeline of every conversation,
+decision, and open thread. You stop losing context between meetings.
+
+### wiki/daily/ notes (full level)
+
+Dated session and meeting notes. Each note links to people and entities:
+
+```markdown
+---
+date: 2026-04-08
+type: meeting | session | standup
+people: [alice-chen, bob-kumar]
+---
+
+# 2026-04-08 — Auth design review
+
+Discussed rate limiting approach with [[people/alice-chen]].
+Decided on token bucket algorithm (see [[decisions/rate-limiting.md]]).
+Action: Bob to prototype by Friday.
+```
+
+The daily/ directory is the raw capture layer for work context. wiki/log.md
+summarizes what happened; daily/ preserves the full notes.
 
 ### wiki/log.md
 
@@ -355,21 +447,32 @@ The skill detects project type and adjusts wiki structure:
 | Library | lib/ or src/ with exports | entities/ for API surface, concepts/ for deprecation |
 | Research | markdown-heavy, papers, references | entities/ for papers/authors, concepts/ for topics |
 | Content | newsletter, blog, wiki | entities/ for sources, concepts/ for editorial patterns |
+| Work/team | multiple collaborators, meetings, Slack | people/ for teammates, daily/ for meeting notes |
 
-### Domain examples (from Karpathy's gist)
+### Domain examples
 
-This pattern applies far beyond code:
+This pattern applies far beyond code. The wiki is a **context engineering
+system** — you're building the input layer that makes every future LLM
+interaction better:
 
-- **Research** — reading papers, building a wiki with evolving thesis
-- **Reading a book** — chapter summaries, character pages, theme pages
-- **Business** — fed by Slack threads, meeting notes, customer calls
+- **Software teams** — meeting notes auto-linked to people and projects, design
+  decisions accumulated over months, onboarding guide generated from the wiki
+  instead of written from scratch (the 52K-file practitioner's use case)
+- **Research** — reading papers, building a wiki with an evolving thesis,
+  each paper touching entity pages for authors and concept pages for methods
+- **Reading a book** — chapter summaries, character pages, theme pages, all
+  interlinked. By the end you have a fan wiki built by your LLM
+- **Business** — fed by Slack threads, meeting notes, customer calls. The wiki
+  stays current because the LLM does the maintenance nobody wants to do
 - **Competitive analysis** — entity pages per competitor, comparison pages
-- **Course notes** — concept pages per lecture, connections between topics
+  auto-updated when new data arrives
+- **Personal** — diary entries, people, projects, inspiration, decisions.
+  The Farzapedia model: 2,500 entries compiled into 400 interlinked articles
 
 The wiki structure adapts to any knowledge domain. Code projects use
 decisions/concepts/entities/gotchas. Research projects might use
-topics/papers/authors/hypotheses. The schema (CLAUDE.md) defines the
-structure for your specific domain.
+topics/papers/authors/hypotheses. Work projects add people/ and daily/.
+The schema (CLAUDE.md) defines the structure for your domain.
 
 ---
 
@@ -392,6 +495,7 @@ structure for your specific domain.
 | Addition | Why |
 |---|---|
 | .metrics.json with objective metrics | Prove compounding is happening, not just hope |
+| measure.sh scorecard script | Hard evidence from git + filesystem, weekly |
 | Trust layer (wiki/drafts/) | Prevent hallucinations from corrupting the wiki |
 | Auto-checkpoint at session end | No manual discipline required |
 | Project-type detection | Adapts wiki structure to domain |
@@ -399,6 +503,10 @@ structure for your specific domain.
 | Installable as a skill | One command vs copy-pasting a gist |
 | Health check with thresholds | Defines "healthy" with numbers, not vibes |
 | overview.md synthesis page | The executive summary Karpathy implies but doesn't specify |
+| people/ directory | Per-person timelines of interactions and decisions |
+| daily/ capture layer | Meeting notes auto-linked to people + entities |
+| Spider ingest | Start from one doc, pull in everything related |
+| Context engineering framing | The wiki isn't the product — better LLM output is |
 
 ---
 
@@ -477,12 +585,125 @@ think about what it all means. The LLM's job is everything else.
 
 ---
 
+## The four principles
+
+Karpathy endorsed these principles via Farzapedia — a personal Wikipedia
+built from 2,500 diary entries. compound-dev is designed to satisfy all four:
+
+### 1. Explicit
+
+The wiki is explicit and navigable. You can see exactly what the AI
+knows and doesn't know. It's not implicit memory hidden inside a model —
+it's files you can read, search, and manage. Every decision, pattern,
+and gotcha is inspectable.
+
+### 2. Yours
+
+Your data stays on your local machine in your git repo. It's not in
+Anthropic's cloud, not in OpenAI's system, not in any provider's database.
+You own it. You can back it up, share it, delete it, move it anywhere.
+
+### 3. File over app
+
+The wiki is a collection of markdown files. Universal format. Any editor
+can open them. Any Unix tool can process them. `grep`, `sed`, `wc`, `find`
+all work natively. Obsidian renders them with graph view and backlinks.
+VS Code edits them. Git versions them. No proprietary format, no lock-in.
+
+Viewing the wiki: open the wiki/ directory in **Obsidian** for the best
+experience — graph view shows the shape of your knowledge (what's connected,
+what's orphaned), backlinks are clickable, and the Marp plugin renders
+any slide-formatted pages. But any markdown viewer works.
+
+### 4. BYOAI (bring your own AI)
+
+compound-dev works with any LLM agent that reads markdown files:
+
+| Agent | Schema file | How it works |
+|---|---|---|
+| Claude Code | CLAUDE.md | Native — reads at session start |
+| OpenAI Codex | AGENTS.md | Copy CLAUDE.md contents to AGENTS.md |
+| OpenCode / Pi | .ai/config or equivalent | Adapt schema to agent's format |
+| Cursor | .cursorrules | Extract session protocol rules |
+| Any agent | Read wiki/index.md | The wiki itself is agent-agnostic |
+
+The wiki/ directory is pure markdown. ANY agent that can read files can
+use it. The schema (CLAUDE.md) tells the specific agent how to navigate
+the wiki — but the wiki itself doesn't care which agent reads it. You can
+switch from Claude Code to Codex tomorrow and the wiki carries over.
+
+If you're using a different agent, rename or copy CLAUDE.md to your
+agent's config file format. The content is the same — project identity,
+session protocol, architecture notes. Only the filename changes.
+
+---
+
+## Beyond code: work context and personal wikis
+
+### Work context (the 52K-file pattern)
+
+A staff engineer with 52,447 markdown files described this pattern:
+every meeting gets a note linked to people and projects. Over months,
+each person's page becomes a timeline of every conversation. Each project
+folder accumulates every artifact. The graph remembers what you'd forget.
+
+For work context, use compound-dev's full level with people/ and daily/:
+
+```
+wiki/
+├── index.md
+├── overview.md          ← "what this team/project is about"
+├── people/              ← one file per colleague, stakeholder, manager
+├── daily/               ← meeting notes, standups, 1:1s (auto-linked)
+├── decisions/           ← architectural and product decisions
+├── concepts/            ← recurring patterns, approaches, architectures
+├── entities/            ← tools, services, repos, APIs
+└── gotchas/             ← traps, outage lessons, production issues
+```
+
+The real power: when you need to write a design doc, a perf packet, a
+project handoff, or an onboarding guide — point the LLM at the wiki
+and it drafts from the real history, not your summary of it.
+
+### Personal wikis (the Farzapedia pattern)
+
+For personal knowledge, structure wiki/ by the PARA taxonomy
+(Projects, Areas, Resources, Archive) or by domain:
+
+```
+wiki/
+├── index.md
+├── log.md
+├── overview.md
+├── people/              ← friends, collaborators, mentors
+├── projects/            ← startups, side projects, active ideas
+├── areas/               ← health, career, finances, relationships
+├── interests/           ← research topics, hobbies, deep dives
+├── inspiration/         ← films, books, articles, images that shaped you
+└── decisions/           ← life decisions and their reasoning
+```
+
+The ingest operation works the same way: add a diary entry, meeting notes,
+an article that inspired you → the LLM integrates it across relevant pages.
+"I met [person] at [event] and they told me about [topic]" might touch
+three wiki pages at once.
+
+The wiki becomes a context engineering system for your life. Ask it:
+"What are the themes across my recent inspirations?" and it synthesizes
+across wiki/inspiration/. Ask it: "Design a landing page based on my
+aesthetic preferences" and it pulls from your saved images and influences.
+The output is better because it has YOUR context, not generic training data.
+
+---
+
 ## File structure
 
 ```
 compound-dev/
 ├── SKILL.md                ← this file (read first)
 ├── README.md               ← install guide + usage
+├── MEASURING-IMPACT.md     ← how to prove it's working
+├── measure.sh              ← weekly scorecard script (run: ./measure.sh)
 └── references/
     └── metrics-schema.md    ← .metrics.json schema + calculation formulas
 ```
