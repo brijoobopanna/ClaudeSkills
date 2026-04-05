@@ -1,6 +1,22 @@
 ---
 name: visual-brief
-description: Create publication-quality technical infographics from any source — tweets, articles, architectures, or ideas. Use this skill whenever the user wants to visually break down a technical concept, map a system architecture, turn a tweet or thread into a shareable diagram, create editorial-style pipeline or flow visualizations, illustrate feedback loops or compounding mechanisms, or produce visuals for a newsletter or blog. Trigger on phrases like "visualize this", "diagram this", "break this down visually", "map this architecture", "make an infographic", "turn this tweet into a visual", "show me how this system works", "create a visual for my newsletter", or any request to produce a designed technical visual rather than a generic flowchart. Also trigger when the user shares a URL, screenshot, or paste of technical content and asks for analysis — the visual IS the analysis. Also trigger for gap analysis: when a user shares a codebase or project and asks "what's missing", "how does this compare to X", or "show me the gaps" — produce a status-colored visual showing what exists (teal), what's missing (coral), and what to build first (purple).
+description: >-
+  Create publication-quality technical infographics from any source — tweets,
+  articles, architectures, or ideas. Use this skill whenever the user wants
+  to visually break down a technical concept, map a system architecture, turn
+  a tweet or thread into a shareable diagram, create editorial-style pipeline
+  or flow visualizations, illustrate feedback loops or compounding mechanisms,
+  or produce visuals for a newsletter or blog. Trigger on phrases like
+  "visualize this", "diagram this", "break this down visually", "map this
+  architecture", "make an infographic", "turn this tweet into a visual",
+  "show me how this system works", "create a visual for my newsletter", or
+  any request to produce a designed technical visual rather than a generic
+  flowchart. Also trigger when the user shares a URL, screenshot, or paste
+  of technical content and asks for analysis — the visual IS the analysis.
+  Also trigger for gap analysis when a user shares a codebase or project and
+  asks "what is missing", "how does this compare to X", or "show me the
+  gaps" — produce a status-colored visual showing what exists (teal), what
+  is missing (coral), and what to build first (purple).
 ---
 
 # visual-brief
